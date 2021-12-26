@@ -1,7 +1,6 @@
 defmodule CrawlAnimeWeb.MovieController do
   use CrawlAnimeWeb, :controller
   alias CrawlAnime.Movies
-  alias CrawlAnimeWeb.CrawlFunc1
   alias CrawlAnimeWeb.CrawlFunc
 
 
@@ -43,26 +42,34 @@ defmodule CrawlAnimeWeb.MovieController do
 
 
   def crawler_url(conn, %{"page_index" => page_index, "page_size" => page_size, "url" => url}) do
-    # {from, to} =
-      list_src = calulate_page_size(page_index, page_size)
-      |> CrawlFunc.crawl_page_link()
-      # |> calulate_source_page_index()
-
-    movies = CrawlFunc1.parse_data(list_src)
-      # CrawlFunc1.get_movie_urls({from, to}, url)
-
+    list_src = get_temp(page_index, page_size) |> CrawlFunc.get_movie_urls(url)
+    movies = CrawlFunc.parse_data(list_src)
 
     # render(conn, "index.json", movies: movies)
     conn |> json(%{status: 1, data: movies})
   end
 
    # Tính số lượng phần tử bắt đầu và kết thúc tương ứng với page_index và page_size.
+  @spec calulate_page_size(number, number) :: {number, number, integer}
   def calulate_page_size(page_index, page_size) do
     {
       page_size * (page_index - 1) + 1,
       page_index * page_size,
       floor((page_index * page_size)/32) + 1,
     }
+  end
+
+
+  def get_temp(page_index, page_size) do
+    from = page_size * (page_index - 1) + 1
+    to = page_index * page_size
+    {
+      from,
+      to,
+      floor(from / 32) + 1,
+      floor(to / 32) + 1
+    }
+
   end
 
     # Tính số trang tương ứng cần lấy trên iphimmoi, do iphimmoi phân trang 32 item/page.
